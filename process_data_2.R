@@ -31,7 +31,7 @@ summed_mat <- do.call(what = "cbind", args = summed_mat_list)
 summed_mat <-  as(summed_mat, "dgTMatrix")
 saveRDS(summed_mat, paste0(intermediate_file_dir, "summed_matrix.rds"))
 
-# 3. binary matrix
+# 3. (ungrouped) binary matrix
 target_regions <- gRNA_matrix_list[[1]]$count_matrix_list %>% names()
 gRNA_count_matrix_list <- lapply(target_regions, function(region) {
   lapply(gRNA_matrix_list, function(x) x$count_matrix_list[[region]]) %>%
@@ -39,18 +39,25 @@ gRNA_count_matrix_list <- lapply(target_regions, function(region) {
 })
 cell_barcodes <- lapply(gRNA_matrix_list, function(x) x$cell_barcodes) %>%
   do.call(what = "c", args = .)
-# We reduce each matrix in the gRNA_count_matrix_list to a single logical vector
+# convert the columns of the matrix to binary.
 combine_gRNAs_in_group <- function(gRNA_count_matrix) {
   apply(X = gRNA_count_matrix, MARGIN = 2, FUN = function(column) {
     v <- sum(column >= 1)
     U <- sum(column)
-    column/U > 1/v
-  }) %>% apply(MARGIN = 1, FUN = function(r) any(r))
+    thresh <- U/v # thresh: average of the nonzero counts
+    column > thresh
+  })
 }
 gRNA_indic_matrix_list <- lapply(gRNA_count_matrix_list, combine_gRNAs_in_group)
-gRNA_indic_matrix <- do.call(what = "rbind", args = gRNA_indic_matrix_list)
+gRNA_indic_matrix <- do.call(what = "cbind", args = gRNA_indic_matrix_list) %>% Matrix::t()
 colnames(gRNA_indic_matrix) <- cell_barcodes
-rownames(gRNA_indic_matrix) <- target_regions
+saveRDS(object = gRNA_indic_matrix, paste0(intermediate_file_dir, "binary_matrix_ungrouped.rds"))
   
-gRNA_indic_matrix_sparse <- as(gRNA_indic_matrix, "dgTMatrix")
-saveRDS(gRNA_indic_matrix_sparse, paste0(intermediate_file_dir, "binary_matrix.rds"))
+# 4. (grouped) binary matrix
+gRNA_indic_matrix_grouped <- lapply(gRNA_indic_matrix_list, function(mat) {
+  Matrix::rowSums(mat) >= 1
+}) %>% do.call(what = "rbind", args = .)
+
+colnames(gRNA_indic_matrix_grouped) <- cell_barcodes
+rownames(gRNA_indic_matrix_grouped) <- target_regions
+saveRDS(gRNA_indic_matrix_grouped, paste0(intermediate_file_dir, "binary_matrix_grouped.rds"))

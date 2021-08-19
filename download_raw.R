@@ -51,3 +51,9 @@ download.file(url = "https://ars.els-cdn.com/content/image/1-s2.0-S2211124719313
 # We put the Genes.xls file in dropbox because automatic download did not work. Download from this link. (source: Human protein-coding genes and gene feature statistics in 2019 by Piovesan et al in BMC Research Notes). 
 dest <- paste0(raw_data_dir, "/Genes.xlsx")
 download.file(url = "https://www.dropbox.com/s/u7dzc4juflgyky4/Genes.xlsx?dl=1", destfile = dest)
+
+############
+# 4. TF info
+############
+dest <- paste0(raw_data_dir, "/TF_human.csv")
+download.file(url = "https://www.dropbox.com/s/yva35ufl4yypr4t/TF_human.csv?dl=1", destfile = dest)
