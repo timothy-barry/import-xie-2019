@@ -1,3 +1,5 @@
+# Process data 1 & 2 convert the gRNA data into sparse matrices, stored in intermediate dir.
+
 #########################################
 # 0. Load data, packages, set directories
 #########################################
@@ -52,7 +54,7 @@ gRNA_indic_matrix_list <- lapply(gRNA_count_matrix_list, combine_gRNAs_in_group)
 gRNA_indic_matrix <- do.call(what = "cbind", args = gRNA_indic_matrix_list) %>% Matrix::t()
 colnames(gRNA_indic_matrix) <- cell_barcodes
 saveRDS(object = gRNA_indic_matrix, paste0(intermediate_file_dir, "binary_matrix_ungrouped.rds"))
-  
+
 # 4. (grouped) binary matrix
 gRNA_indic_matrix_grouped <- lapply(gRNA_indic_matrix_list, function(mat) {
   Matrix::rowSums(mat) >= 1

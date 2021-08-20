@@ -6,13 +6,12 @@
 library(magrittr)
 xie_offsite <-.get_config_path("LOCAL_XIE_2019_DATA_DIR")
 raw_data_dir <- paste0(xie_offsite, "raw/")
-aux_data_dir <- paste0(xie_offsite, "processed/aux")
+aux_data_dir <- paste0(xie_offsite, "processed/aux/")
 intermediate_data_dir  <- paste0(xie_offsite, "intermediate/")
 if (!dir.exists(aux_data_dir)) dir.create(aux_data_dir, recursive = TRUE)
 h5_loc <- paste0(raw_data_dir, "GSM3722729_K562-dCas9-KRAB_5K-sgRNAs_Batch-1_1_filtered_gene_bc_matrices_h5.h5")
 gene.id <- rhdf5::h5read(file = h5_loc, name = "/refgenome_hg38_CROP-Guide-MS2-2.1.0/genes")
-gRNA_tbl <- openxlsx::read.xlsx(xlsxFile = paste0(raw_data_dir, "/all_oligos.xlsx"),
-                                sheet = 1) %>% dplyr::rename(hg38_enh_region = "region.pos.(hg38)")
+gRNA_tbl <- readRDS(paste0(aux_data_dir, "gRNA_sequence_dictionary.rds"))
 tf.gene <- read.csv(paste0(raw_data_dir, "TF_human.csv"))
 
 #####################
@@ -42,6 +41,8 @@ gene.mart <- rbind(gene.mart, gene.mart.left)
 gene.mart$chr <- as.factor(paste0('chr', gene.mart$chromosome_name))
 row.names(gene.mart) <- NULL
 saveRDS(gene.mart, file = paste0(intermediate_data_dir, "/gene_mart.rds"))
+
+gene.mart <- readRDS(paste0(intermediate_data_dir, "/gene_mart.rds"))
 
 ########################
 # 2. guide RNA positions
