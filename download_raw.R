@@ -52,8 +52,11 @@ download.file(url = "https://ars.els-cdn.com/content/image/1-s2.0-S2211124719313
 dest <- paste0(raw_data_dir, "/Genes.xlsx")
 download.file(url = "https://www.dropbox.com/s/u7dzc4juflgyky4/Genes.xlsx?dl=1", destfile = dest)
 
-############
-# 4. TF info
-############
+#####################################
+# 4. TF info and protein-coding genes
+#####################################
 dest <- paste0(raw_data_dir, "/TF_human.csv")
 download.file(url = "https://www.dropbox.com/s/yva35ufl4yypr4t/TF_human.csv?dl=1", destfile = dest)
+
+dest <- paste0(raw_data_dir, "/Genes.xlsx")
+download.file(url = "https://www.dropbox.com/s/u7dzc4juflgyky4/Genes.xlsx?dl=1", destfile = dest)
