@@ -17,13 +17,19 @@ cells_in_use <- readRDS(paste0(intermediate_file_dir, "cells_in_use.rds"))
 ############################
 # Create gene expression odm
 ############################
+h5_loc <- paste0(raw_data_dir, "GSM3722729_K562-dCas9-KRAB_5K-sgRNAs_Batch-1_1_filtered_gene_bc_matrices_h5.h5")
+gene_id <- rhdf5::h5read(file = h5_loc, name = "/refgenome_hg38_CROP-Guide-MS2-2.1.0/genes")
+gene_name <- rhdf5::h5read(file = h5_loc, name = "/refgenome_hg38_CROP-Guide-MS2-2.1.0/gene_names")
+
 exp_mat <- readRDS(paste0(intermediate_file_dir, "gene_exp_mat.rds"))[,cells_in_use]
 exp_mat <- as(exp_mat, "dgTMatrix")
-features_df <- data.frame(gene_id = rownames(exp_mat))
+# check that gene IDs are correctly ordered
+all(rownames(exp_mat) == gene_id)
+features_df <- data.frame(gene_id = gene_id, gene_name = gene_name)
 odm_fp <- paste0(gene_processed_data_dir, "expression_matrix.odm")
 metadata_fp <- paste0(gene_processed_data_dir, "metadata.rds")
 
-odm <- ondisc::create_ondisc_matrix_from_R_matrix(r_matrix = exp_mat,
+odm <- create_ondisc_matrix_from_R_matrix(r_matrix = exp_mat,
                                                   barcodes = cells_in_use,
                                                   features_df = features_df,
                                                   odm_fp = odm_fp,

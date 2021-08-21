@@ -60,3 +60,14 @@ download.file(url = "https://www.dropbox.com/s/yva35ufl4yypr4t/TF_human.csv?dl=1
 
 dest <- paste0(raw_data_dir, "/Genes.xlsx")
 download.file(url = "https://www.dropbox.com/s/u7dzc4juflgyky4/Genes.xlsx?dl=1", destfile = dest)
+
+
+###############################
+# 5. Results from other authors
+###############################
+dest <- paste0(raw_data_dir, "/hypergeometric_pvals_arl15_down.mat")
+download.file(url = "https://github.com/russellxie/Global-analysis-K562-enhancers/blob/master/Notebooks/Data/Hypergeometric_pvals/chr5-54325645-54326045-down_log-pval.mat?raw=true", destfile = dest)
+
+dest <- paste0(raw_data_dir, "/hypergeometric_pvals_myb3_down.mat")
+download.file(url = "https://github.com/russellxie/Global-analysis-K562-enhancers/blob/master/Notebooks/Data/Hypergeometric_pvals/chr6-135323137-135323537-down_log-pval.mat?raw=true", destfile = dest)
+
