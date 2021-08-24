@@ -12,7 +12,7 @@ if (!dir.exists(aux_data_dir)) dir.create(aux_data_dir, recursive = TRUE)
 h5_loc <- paste0(raw_data_dir, "GSM3722729_K562-dCas9-KRAB_5K-sgRNAs_Batch-1_1_filtered_gene_bc_matrices_h5.h5")
 gene.id <- rhdf5::h5read(file = h5_loc, name = "/refgenome_hg38_CROP-Guide-MS2-2.1.0/genes")
 gene.name <- rhdf5::h5read(file = h5_loc, name = "/refgenome_hg38_CROP-Guide-MS2-2.1.0/gene_names")
-gRNA_tbl <- readRDS(paste0(aux_data_dir, "gRNA_sequence_dictionary.rds"))
+gRNA_tbl <- readRDS(paste0(intermediate_data_dir, "guide_seqs.rds"))
 tf.gene <- read.csv(paste0(raw_data_dir, "TF_human.csv"))
 
 #####################

@@ -28,7 +28,7 @@ matrix_list <- lapply(seq(1L, length(h5_fs)), function(i) {
   # ensure barcodes are unique
   if (any(duplicated(barcodes))) stop("Barcodes duplicated within batch/run.")
   # process barcodes
-  barcodes_annotated <- paste0(gsub(pattern = "1", replacement = "", x = barcodes),
+  barcodes_annotated <- paste0(gsub(pattern = "-1", replacement = "_", x = barcodes),
                                batch[i])
   gene_ids <- rhdf5::h5read(file = h5_f, name = paste0(base_name, "genes"))
   x <- rhdf5::h5read(file = h5_f, name = paste0(base_name, "data"))
@@ -55,7 +55,7 @@ saveRDS(object = batch, file = paste0(intermediate_file_dir, "batch_vector.rds")
 saveRDS(object = gene_exp_m, paste0(intermediate_file_dir, "gene_exp_mat.rds"))
 
 # Finally, obtain the cells to use (taken as the intersection of the gene cells and the gRNA cells)
-# gene_exp_m <- readRDS(paste0(intermediate_file_dir, "gene_exp_mat.rds"))
-gRNA_matrix <- readRDS(paste0(intermediate_file_dir, "summed_matrix.rds"))
+gene_exp_m <- readRDS(paste0(intermediate_file_dir, "gene_exp_mat.rds"))
+gRNA_matrix <- readRDS(paste0(intermediate_file_dir, "gRNA_matrix.rds"))
 cells_to_use <- intersect(colnames(gene_exp_m), colnames(gRNA_matrix))
 saveRDS(object = cells_to_use, paste0(intermediate_file_dir, "cells_in_use.rds"))
