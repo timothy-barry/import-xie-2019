@@ -32,9 +32,9 @@ pairs_plus <- dplyr::left_join(x = pairs, y = extra_gene_info, by = "gene_id") %
 saveRDS(object = pairs_plus, file = paste0(aux_dir, "pairs_grouped.rds"))
 
 # finally, add the spacer sequences to create the ungrouped pairs data frame
-guide_seqs <- readRDS(paste0(aux_dir, "gRNA_sequence_dictionary.rds")) %>% 
+guide_seqs <- readRDS(paste0(intermediate_data_dir, "guide_seqs.rds")) %>% 
   dplyr::rename("enh_region" = "hg38_enh_region") %>% dplyr::mutate_all(factor)
 grouped_pairs <- pairs_plus %>% dplyr::rename("enh_region" = "gRNA_id")
 ungrouped_pairs <- dplyr::inner_join(x = grouped_pairs, y = guide_seqs, by = "enh_region") %>%
-  dplyr::rename("gRNA_id" = "spacer_sequence")
+  dplyr::rename("gRNA_id" = "spacer_seq")
 saveRDS(object = ungrouped_pairs, file = paste0(aux_dir, "pairs_ungrouped.rds"))
