@@ -18,32 +18,31 @@ tf.gene <- read.csv(paste0(raw_data_dir, "TF_human.csv"))
 #####################
 # 1. gene positions
 #####################
-gene.ensembl.id <- lapply(strsplit(gene.id, '[.]'), function(x){x[1]}) %>% unlist()
-ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
-ensembl.37 <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", GRCh = 37)
-temp <- biomaRt::getBM(attributes=c('ensembl_gene_id', 'hgnc_symbol', 'chromosome_name',
-                                    'start_position', 'end_position', 'strand'),
-              mart = ensembl, useCache = FALSE)
-gene.mart <- temp[match(gene.ensembl.id, temp$ensembl_gene_id), ]  # Match ensembl id with chromosome positions.
-gene.mart$original.id <- gene.id
+  gene.ensembl.id <- lapply(strsplit(gene.id, '[.]'), function(x){x[1]}) %>% unlist()
+  ensembl <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+  ensembl.37 <- biomaRt::useEnsembl(biomart = "ensembl", dataset = "hsapiens_gene_ensembl", GRCh = 37)
+  temp <- biomaRt::getBM(attributes=c('ensembl_gene_id', 'hgnc_symbol', 'chromosome_name',
+                                      'start_position', 'end_position', 'strand'),
+                         mart = ensembl, useCache = FALSE)
+  gene.mart <- temp[match(gene.ensembl.id, temp$ensembl_gene_id), ]  # Match ensembl id with chromosome positions.
+  gene.mart$original.id <- gene.id
+  
+  # some gene id is from GRCh37, which has been deleted from CRCh38. We don't want to miss them.
+  na_gene_mart_idx <- which(is.na(gene.mart$ensembl_gene_id))
+  left_gene <- gene.ensembl.id[na_gene_mart_idx]
+  temp.37 <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol','chromosome_name',
+                                           'start_position', 'end_position', 'strand'),
+                            filters = 'ensembl_gene_id', values = left_gene, mart = ensembl.37, useCache = FALSE)
+  gene.mart.left <- temp.37[match(left_gene, temp.37$ensembl_gene_id),]
+  gene.mart.left$original.id <- gene.id[na_gene_mart_idx]
+  
+  # finally, remove the NA entries, and combine gene.mart and gene.mart.left
+  gene.mart <- na.omit(gene.mart); gene.mart.left <- na.omit(gene.mart.left)
+  gene.mart <- rbind(gene.mart, gene.mart.left)
+  gene.mart$chr <- as.factor(paste0('chr', gene.mart$chromosome_name))
+  row.names(gene.mart) <- NULL
+  saveRDS(gene.mart, file = paste0(intermediate_data_dir, "/gene_mart.rds"))
 
-# some gene id is from GRCh37, which has been deleted from CRCh38. We don't want to miss them.
-na_gene_mart_idx <- which(is.na(gene.mart$ensembl_gene_id))
-left_gene <- gene.ensembl.id[na_gene_mart_idx]
-temp.37 <- biomaRt::getBM(attributes = c('ensembl_gene_id', 'hgnc_symbol','chromosome_name',
-                                         'start_position', 'end_position', 'strand'),
-                 filters = 'ensembl_gene_id', values = left_gene, mart = ensembl.37, useCache = FALSE)
-gene.mart.left <- temp.37[match(left_gene, temp.37$ensembl_gene_id),]
-gene.mart.left$original.id <- gene.id[na_gene_mart_idx]
-
-# finally, remove the NA entries, and combine gene.mart and gene.mart.left
-gene.mart <- na.omit(gene.mart); gene.mart.left <- na.omit(gene.mart.left)
-gene.mart <- rbind(gene.mart, gene.mart.left)
-gene.mart$chr <- as.factor(paste0('chr', gene.mart$chromosome_name))
-row.names(gene.mart) <- NULL
-saveRDS(gene.mart, file = paste0(intermediate_data_dir, "/gene_mart.rds"))
-
-gene.mart <- readRDS(paste0(intermediate_data_dir, "/gene_mart.rds"))
 
 ########################
 # 2. guide RNA positions
@@ -51,13 +50,14 @@ gene.mart <- readRDS(paste0(intermediate_data_dir, "/gene_mart.rds"))
 gRNA.id <- unique(gRNA_tbl$hg38_enh_region)
 temp.gRNA = strsplit(gRNA.id, ':')
 gRNA.mart = data.frame(chr = lapply(temp.gRNA, function(x){x[1]}) %>% unlist)
-
+  
 temp.gRNA.p = do.call(rbind, lapply(temp.gRNA, function(x){unlist(strsplit(x[2], '-'))}))
 gRNA.mart$start_position = as.numeric(temp.gRNA.p[, 1])
 gRNA.mart$end_position = as.numeric(temp.gRNA.p[, 2])
 gRNA.mart$gRNA_id = gRNA.id
 gRNA.mart$mid_position = (gRNA.mart$start_position + gRNA.mart$end_position)/2  # Mid point of gRNA.
 saveRDS(gRNA.mart, file = paste0(intermediate_data_dir, "/gRNA_mart.rds"))
+
 
 ###################################
 # 3. gene-potential enhancer pairs
@@ -82,8 +82,9 @@ for (chr in chr.select) {
   distance.temp = sapply(gene.tss, function(x){x - gRNA.pos})
   temp.id = which(abs(distance.temp) < 1000000, arr.ind = T)
   select.gRNA.gene.pair = rbind(select.gRNA.gene.pair,
-                                data.frame(gene.id = gene.id[gene.chr.id[temp.id[, 2]]], gRNA.id = gRNA.id[gRNA.chr.id[temp.id[, 1]]]))
-  # cat(chr, ' is done! \n')
+                                data.frame(gene.id = gene.mart$original.id[gene.chr.id[temp.id[, 2]]],
+                                           gRNA.id = gRNA.id[gRNA.chr.id[temp.id[, 1]]]))
+  cat(chr, ' is done! \n')
 }
 dim(select.gRNA.gene.pair)
 # 3530 pairs of gene and gRNA
@@ -194,3 +195,16 @@ for (chr in chr.select) {
 
 saveRDS(neg.control.pair, file = paste0(intermediate_data_dir, '/neg_control_pair.rds')) # negative control pairs
 saveRDS(num.neg.pair, file = paste0(intermediate_data_dir, '/num_neg_pair.rds')) # number of negative controls by gene/gRNA
+
+##########
+# 7. Check
+##########
+# Ensure the negative control pairs and cis pairs do not overlap and that there are not duplicates.
+nc_pairs <- select.gRNA.gene.pair %>% dplyr::mutate(pair_id = paste0(gRNA.id, ":", gene.id)) %>%
+  dplyr::pull(pair_id) %>% as.character()
+cis_pairs <- neg.control.pair %>% dplyr::mutate(pair_id =  paste0(gRNA.id, ":", gene.id)) %>%
+  dplyr::pull(pair_id) %>% as.character()
+
+nc_pairs %>% duplicated() %>% any() # no duplicates
+cis_pairs %>% duplicated() %>% any() # no duplicates
+intersect(nc_pairs, cis_pairs) # no intersection

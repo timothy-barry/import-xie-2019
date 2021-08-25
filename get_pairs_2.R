@@ -30,6 +30,9 @@ pairs <- rbind(cis_pairs, neg_control_pairs) %>%
 pairs_plus <- dplyr::left_join(x = pairs, y = extra_gene_info, by = "gene_id") %>%
   dplyr::mutate_at(.tbl = ., .vars = c("gene_id", "gRNA_id", "type", "gene_name"), .funs = factor)
 saveRDS(object = pairs_plus, file = paste0(aux_dir, "pairs_grouped.rds"))
+# ensure no duplicates
+pairs_plus %>% dplyr::mutate(pair_id = paste0(gene_id, ":", gRNA_id)) %>%
+  dplyr::pull(pair_id) %>% duplicated() %>% any()
 
 # finally, add the spacer sequences to create the ungrouped pairs data frame
 guide_seqs <- readRDS(paste0(intermediate_data_dir, "guide_seqs.rds")) %>% 
